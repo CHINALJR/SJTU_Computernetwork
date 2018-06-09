@@ -114,7 +114,7 @@ public class RouteTable
 			}
 			
 			// Add an entry to the route table
-			this.addEntry(dstIp, gwIp, maskIp, iface);
+			this.addEntry(dstIp, gwIp, maskIp, iface,0);
 		}
 	
 		// Close the file
@@ -130,9 +130,9 @@ public class RouteTable
 	 * @param iface router interface out which to send packets to reach the 
 	 *        destination or gateway
 	 */
-	public void addEntry(int dstIp, int gwIp, int maskIp, String iface)
+	public void addEntry(int dstIp, int gwIp, int maskIp, String iface,int hopTime)
 	{
-		RouteTableEntry entry = new RouteTableEntry(dstIp, gwIp, maskIp, iface);
+		RouteTableEntry entry = new RouteTableEntry(dstIp, gwIp, maskIp, iface,hopTime);
         synchronized(this.entries)
         { 
             this.entries.add(entry);
@@ -165,16 +165,53 @@ public class RouteTable
 	 * @param ifaceName new router interface name for matching entry
      * @return true if a matching entry was found and updated, otherwise false
 	 */
+	private RouteTableEntry getBest(int dstAddr){
+		List<RouteTableEntry> fuck = this.getEntries();
+		RouteTableEntry bestMatch =null;
+		long t = 0;
+		for (RouteTableEntry x : fuck){
+			int ccc1 = ( x.getMaskAddress() & dstAddr );
+			int ccc2 = ( x.getDestinationAddress() & x.getMaskAddress() );
+			if (ccc1 == ccc2){
+				if (x.getMaskAddress()<t){
+					System.out.println("Find best match!");		
+					t = x.getMaskAddress();
+					bestMatch = x;
+				}
+			}
+		}
+		return bestMatch;
+	}
 	public boolean updateEntry(int dstIp, int maskIp, int gwIp, 
-            String ifaceName)
+            String ifaceName,int hopTime)
 	{
         synchronized(this.entries)
         {
             RouteTableEntry entry = this.findEntry(dstIp, maskIp);
             if (null == entry)
-            { return false; }
-            entry.setGatewayAddress(gwIp);
-            entry.setInterface(ifaceName);
+            { 
+            	if (hopTime < 16){
+            		entry = new RouteTableEntry(dstIp, gwIp, maskIp, ifaceName,hopTime);
+            		this.entries.add(entry);
+            		return true;
+            	}
+            	else {
+            		RouteTableEntry bestMatch = this.getBest(dstIp);
+            		if (bestMatch == null){
+            			entry = new RouteTableEntry(dstIp, gwIp, maskIp, ifaceName,16);
+            			this.entries.add(entry);
+            			return true;
+            		}
+            		return false;
+            	}
+            }
+            if (hopTime <= entry.getHopTime()){
+		          entry.setGatewayAddress(gwIp);
+		          entry.setInterface(ifaceName);
+		          entry.setHopTime(hopTime);
+		          entry.setTimeAdded();
+		          return true;
+            }
         }
         return true;
 	}

@@ -1,6 +1,7 @@
 package edu.wisc.cs.sdn.sr;
 
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.floodlightcontroller.packet.ARP;
@@ -92,8 +93,11 @@ public class ArpCache implements Runnable
 		    /* TODO: send ICMP host unreachable to the source        */ 
 		    /* address of all packets waiting on this request        */
 			
-			
 		    /*********************************************************/
+		  List<Ethernet> goback = request.getWaitingPackets();
+		  for (Ethernet gbpacket : goback){
+		  	router.sendICMP(router.DEST_HOST_UNREACHABLE,gbpacket);
+		  }
 			
 			this.requests.remove(request.getIpAddress());
 		}

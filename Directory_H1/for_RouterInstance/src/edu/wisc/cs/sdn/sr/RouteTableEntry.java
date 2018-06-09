@@ -18,9 +18,13 @@ public class RouteTableEntry
 	/** Name of the router interface out which packets should be sent to reach
 	 * the destination or gateway */
 	private String interfaceName;
-	
+	private int hopTime;
+	private long timeAdded;
 	//private int timer = 0;
-	
+	public int getHopTime()
+	{ return this.hopTime; }
+	public int setHopTime(int fucktime)
+	{ return this.hopTime = fucktime; }
 	/**
 	 * Create a new route table entry.
 	 * @param destinationAddress destination IP address
@@ -30,12 +34,15 @@ public class RouteTableEntry
 	 *        be sent to reach the destination or gateway
 	 */
 	public RouteTableEntry(int destinationAddress, int gatewayAddress, 
-			int maskAddress, String ifaceName)
+			int maskAddress, String ifaceName,int hopTime)
 	{
 		this.destinationAddress = destinationAddress;
 		this.gatewayAddress = gatewayAddress;
 		this.maskAddress = maskAddress;
 		this.interfaceName = ifaceName;
+		this.hopTime = hopTime;
+		this.timeAdded = System.currentTimeMillis();
+		if (hopTime == 0 ) this.timeAdded = -1;
 	}
 	
 	/**
@@ -47,6 +54,7 @@ public class RouteTableEntry
 	/**
 	 * @return gateway IP address
 	 */
+	
 	public int getGatewayAddress()
 	{ return this.gatewayAddress; }
 
@@ -81,4 +89,9 @@ public class RouteTableEntry
 		result += interfaceName;
 		return result;
 	}
+	public void setTimeAdded(){
+		this.timeAdded = System.currentTimeMillis();
+	}
+  public long getTimeAdded()
+	{ return this.timeAdded; }
 }
